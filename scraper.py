@@ -6,9 +6,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin
 from urllib.robotparser import RobotFileParser
 
-URL = "https://www.youtube.com/"
-permitted_domains = ["youtube.com", "google.com"]
-upper_bound = 25
+URL = "https://store.steampowered.com/"
+permitted_domains = ["store.steampowered.com", "google.com", "youtube.com"]
+upper_bound = 500
 
 # Check robots.txt
 rp = RobotFileParser()
@@ -37,11 +37,12 @@ for link in results:
     domain = urlparse(full_url).netloc #extracts domain name
 
     # Skips if domain is not permitted
-    if all(permitted not in domain for permitted in permitted_domains):
+    if domain not in permitted_domains:
         continue
     # Skips if the standard for robot exclusion is violated
     if not rp.can_fetch("*", full_url):
-        print("NOTICE: URL skipped, Robot Exclusion Standard Violated")
+        print("NOTICE: URL skipped, Robot Exclusion Standard violated.")
         continue
     print(f"Found URL: {full_url}")
     count += 1
+
