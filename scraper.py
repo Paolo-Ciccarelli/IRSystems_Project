@@ -39,9 +39,11 @@ for link in results:
     # Skips if domain is not permitted
     if all(permitted not in domain for permitted in permitted_domains):
         continue
+
     # Skips if the standard for robot exclusion is violated
     if not rp.can_fetch("*", full_url):
         print("NOTICE: URL skipped, Robot Exclusion Standard Violated")
         continue
+
     print(f"Found URL: {full_url}")
     count += 1
