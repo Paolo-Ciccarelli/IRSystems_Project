@@ -38,6 +38,10 @@ def remove_stopwords(tokens, stopword_list):
 def stem_tokens(tokens):
     return [STEMMER.stem(token) for token in tokens]
 
+# Invoked during the cumulative preprocessing stages
+def chain_base(tokens):
+    return case_fold(remove_numbers(tokens))
+
 # ===================================
 # HELPER FUNCTIONS FOR PRINTING TABLE
 # ===================================
@@ -50,8 +54,7 @@ def calculate_delta(current: int, previous: int):
         return 0
     difference = previous - current
     ratio = difference/previous
-    percentage = -100 * ratio
-    return round(percentage)
+    return round(-100 * ratio)
 
 # Evaluates the cumulative percentage change from the baseline
 def calculate_total(current, baseline):
@@ -60,8 +63,7 @@ def calculate_total(current, baseline):
         return 0
     difference = baseline - current
     ratio = difference/baseline
-    percentage = -100 * ratio
-    return round(percentage)
+    return round(-100 * ratio)
 
 # ===================================
 # IMPORTANT FUNCTIONS
@@ -72,59 +74,53 @@ def calculate_total(current, baseline):
 def build_compression_table(directory):
     sgm_files = sorted(glob.glob(os.path.join(directory, '*sgm')))
     
-    # Prepares the groundwork for building the table by generating custom stopword lists
-    global_pairs = [] #stores (docID, text) tuples for every document in the corpus
-    global_lctokens = [] #stores tokens that have been processed until casefolding
-
+    # First Pass: scans corpus to identify the 30/150 most common stopwords
+    token_counts = Counter()
     for filepath in sgm_files:
         documents = naive_indexer.parse_sgm(filepath)
-        global_pairs.extend(documents)
-        for (docID, text) in documents:
+        for _, text in documents:
             tokens = tokenize_only(text)
-            tokens = remove_numbers(tokens)
-            tokens_lower = case_fold(tokens)
-            global_lctokens.extend(tokens_lower) 
-
-    print(f"DEBUG: loaded {len(global_pairs)} documents")
-    word_freq = Counter(global_lctokens)
-    top_30 = set([word for word, count in word_freq.most_common(30)])
-    top_150 = set([word for word, count in word_freq.most_common(150)])
-    print(f"DEBUG: top 30 words: {list(top_30)[:10]}...")
-
-    # Computes statistics for each preprocessing level
-    preprocessing_stages = [
-        ("unfiltered", lambda tokens: tokens),
-        ("no_numbers", lambda tokens: remove_numbers(tokens)),
-        ("case_folding", lambda tokens: case_fold(remove_numbers(tokens))),
-        ("stop_30", lambda tokens: remove_stopwords(case_fold(remove_numbers(tokens)), top_30)),
-        ("stop_150", lambda tokens: remove_stopwords(case_fold(remove_numbers(tokens)), top_150)),
-        ("stemming", lambda tokens: stem_tokens(remove_stopwords(case_fold(remove_numbers(tokens)), top_150)))
-    ]
+            lctokens = case_fold(remove_numbers(tokens))
+            token_counts.update(lctokens)
     
-    # stages_F: dictionary storing (term,docID) pair lists for each stage
-    stages_F = {stage_name: [] for stage_name, _ in preprocessing_stages}
+    # Generate custom stopword lists
+    top_30_stops = {word for word, _ in token_counts.most_common(30)}
+    top_150_stops = {word for word, _ in token_counts.most_common(150)}
+    
+    # Define the preprocessing stages, the rows of the table
+    preprocessing_stages = {
+        'unfiltered': lambda t: t,
+        'no_numbers': remove_numbers,
+        'case_folding': chain_base,
+        'stop_30': lambda t: remove_stopwords(chain_base(t), top_30_stops),
+        'stop_150': lambda t: remove_stopwords(chain_base(t), top_150_stops),
+        'stemming': lambda t: stem_tokens(remove_stopwords(chain_base(t), top_150_stops))
+    }
+    
+    # Second Pass: re-scans corpus to apply filters and count savings
+    # stages_F: dictionary storing refined (term,docID) pairs for each preprocessing stage
+    stages_F = {stage: [] for stage in preprocessing_stages}
+    for filepath in sgm_files:
+        documents = naive_indexer.parse_sgm(filepath)
+        for docID, text in documents:
+            tokens = tokenize_only(text)
+            for stage_name, preprocess_func in preprocessing_stages.items():
+                terms = preprocess_func(tokens)
+                stages_F[stage_name].extend((term, docID) for term in terms)
 
-    # Loops through all preprocessing stages for each document
-    for docID, text in global_pairs:
-        tokens = tokenize_only(text)
-        for stage_name, preprocess_func in preprocessing_stages:
-            terms = preprocess_func(tokens)
-            stages_F[stage_name].extend((term, docID) for term in terms)
-
-    # results: dictionary that holds the statistics for each column
+    # results: aggregates raw data from "stages_F" into counts for future analysis
     # First column holds the number of distinct terms after preprocessing
     # Second column holds the number of unique (term, docID) combinations
     results = {}
     for stage_name in stages_F:
         pairs = stages_F[stage_name]
-        distinct_terms = len(set(term for term, docid in pairs))
+        distinct_terms = len(set(term for term, _ in pairs))
         nonpos_postings = len(set(pairs))
         results[stage_name] = {
             'terms': distinct_terms,      # For column 1
             'postings': nonpos_postings,  # For column 2
         }
-    return results
-
+    return results, stages_F, top_30_stops, top_150_stops
 
 
 def print_table(results):

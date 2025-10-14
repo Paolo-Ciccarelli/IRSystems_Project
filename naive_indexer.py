@@ -47,7 +47,7 @@ def parse_sgm(filepath):
 
 # Transforms tokens into terms using linguistic preprocessing
 def preprocess_tokenize(text):
-    #Lowercase normalization
+    #Case Folding
     text = text.lower()
     #Tokenization
     tokens = TOKENIZER.tokenize(text)
@@ -111,45 +111,6 @@ def build_inverted_index(F_sorted):
     print(f"DEBUG: Index contains {len(index)} unique terms")
     return index
 
-# Display index statistics and sample
-def display_index_info(index):
-    print("\n" + "="*60)
-    print("INVERTED INDEX STATISTICS")
-    print("="*60)
-    
-    print(f"\nTotal unique terms: {len(index)}")
-    
-    # Calculate statistics
-    postings_lengths = [len(postings) for postings in index.values()]
-    total_postings = sum(postings_lengths)
-    avg_postings = total_postings / len(index) if index else 0
-    max_postings = max(postings_lengths) if postings_lengths else 0
-    
-    print(f"Total postings: {total_postings}")
-    print(f"Average postings per term: {avg_postings:.2f}")
-    print(f"Maximum postings for a term: {max_postings}")
-    
-    # Find most common terms
-    print("\n" + "-"*60)
-    print("TOP 20 MOST FREQUENT TERMS:")
-    print("-"*60)
-    
-    sorted_terms = sorted(index.items(), key=lambda x: len(x[1]), reverse=True)
-    for i, (term, postings) in enumerate(sorted_terms[:20], 1):
-        print(f"{i:2d}. '{term}' appears in {len(postings)} documents: {postings}")
-    
-    # Sample some terms alphabetically
-    print("\n" + "-"*60)
-    print("SAMPLE TERMS (Alphabetically):")
-    print("-"*60)
-    
-    sample_terms = sorted(index.keys())[:20]
-    for term in sample_terms:
-        postings = index[term]
-        print(f"'{term}' -> {postings}")
-
-
-
 
 print("="*60)
 print("NAIVE INDEXER IMPLEMENTATION")
@@ -159,3 +120,9 @@ F = process_documents(reuters_dir)
 F_sorted = sort_cull(F)
 inverted_index = build_inverted_index(F_sorted)
 #display_index_info(inverted_index)
+
+# Written to file for convenient access
+with open('inverted_index.txt', 'w', encoding='utf-8') as f:
+    for term, postings in sorted(inverted_index.items()):
+        f.write(f"{term}: {postings}\n")
+print("DEBUG: written to file")
