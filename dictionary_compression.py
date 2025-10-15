@@ -66,7 +66,7 @@ def calculate_total(current, baseline):
     return round(-100 * ratio)
 
 # ===================================
-# IMPORTANT FUNCTIONS
+# IMPORTANT FUNCTIONS FOR PART I
 # ===================================
 
 # Builds Table 5.1 across all preprocessing stages
@@ -83,11 +83,11 @@ def build_compression_table(directory):
             lctokens = case_fold(remove_numbers(tokens))
             token_counts.update(lctokens)
     
-    # Generate custom stopword lists
+    # Generates custom stopword lists
     top_30_stops = {word for word, _ in token_counts.most_common(30)}
     top_150_stops = {word for word, _ in token_counts.most_common(150)}
     
-    # Define the preprocessing stages, the rows of the table
+    # Defines the preprocessing stages (ie: the rows of the table)
     preprocessing_stages = {
         'unfiltered': lambda t: t,
         'no_numbers': remove_numbers,
@@ -122,7 +122,8 @@ def build_compression_table(directory):
         }
     return results, stages_F, top_30_stops, top_150_stops
 
-
+# Prints the final compression table to the console
+# Evaluates Δ% and T% respectively during construction
 def print_table(results):
     stages_code = ['unfiltered', 'no_numbers', 'case_folding', 'stop_30', 'stop_150', 'stemming']
     stages_print = ['unfiltered', 'no numbers', 'case folding', '30 stop words', '150 stop words', 'stemming']
@@ -134,7 +135,7 @@ def print_table(results):
     print(f"{'':20} {'number':>10} {'Δ%':>5} {'T%':>5}   {'number':>10} {'Δ%':>5} {'T%':>5}")
     print("-"*80)
 
-    #Retrieve baseline (unfiltered) values
+    #Retrieves the baseline (unfiltered) values
     baseline_terms = results['unfiltered']['terms']
     baseline_postings = results['unfiltered']['postings']
 
@@ -143,14 +144,14 @@ def print_table(results):
     for i, stage in enumerate(stages_code):
         current = results[stage]
         if stage in ['stop_30', 'stop_150']:
-            prev_stage = results['case_folding']
-        elif i > 0:
-            prev_stage = results[stages_code[i-1]]
+            prev_terms_temp = results['case_folding']['terms']
+            prev_postings_temp = results['case_folding']['postings']
         else:
-            prev_stage = None
+            prev_terms_temp = prev_terms
+            prev_postings_temp = prev_postings
 
-        t_delta = calculate_delta(current['terms'], prev_stage['terms'] if prev_stage else None)
-        p_delta = calculate_delta(current['postings'], prev_stage['postings'] if prev_stage else None)
+        t_delta = calculate_delta(current['terms'], prev_terms_temp)
+        p_delta = calculate_delta(current['postings'], prev_postings_temp)
         t_total = calculate_total(current['terms'], baseline_terms)
         p_total = calculate_total(current['postings'], baseline_postings)
         
@@ -159,16 +160,15 @@ def print_table(results):
               f"{current['postings']:10,} {abs(p_delta):5} {abs(p_total):5}")
 
         # Update previous values for the next iteration
-        if prev_stage:
-            prev_terms = prev_stage['terms']
-            prev_postings = prev_stage['postings']
+        prev_terms = current['terms']
+        prev_postings = current['postings']
 
     print("="*80)
 
 
 # Testing 
 reuters_dir = 'C:\\Users\\prowl\\Downloads\\reuters21578'   
-results = build_compression_table(reuters_dir)
+results, _, _, _ = build_compression_table(reuters_dir)
 print_table(results)
 
 
