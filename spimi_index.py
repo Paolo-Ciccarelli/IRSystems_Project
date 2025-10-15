@@ -52,7 +52,67 @@ def write_to_disk(sorted_terms, dictionary, filename):
             postings = dictionary[term]
             f.write(f"{term}: {' '.join(map(str, postings))}\n")
 
+
 # Combines multiple sorted block files into a single inverted index by executing the k-way merge 
 # algorithm, also removes duplicates. 
 def merge_blocks(block_files, output_file='spimi_inverted_index.txt'):
+    print(f"\nDEBUG: merging {len(block_files)} blocks...")
+
+    file_handles = []
+    block_lines = []
+
+    for block_file in block_files:
+        fh = open(block_file, 'r', encoding='utf-8')
+        file_handles.append(fh)
+        line = fh.readline()
+        if line:
+            term, postings_str = line.strip().split(':', 1)
+            postings = list(map(int, postings_str.split()))
+            block_lines.append((term, postings, len(file_handles)-1))
+
+    merged_index = defaultdict(list)
+    while block_lines:
+        # Find the minimum term
+        block_lines.sort(key=lambda x: x[0])
+        min_term = block_lines[0][0]
+
+        # Collect all postings for this term from all blocks
+        postings_for_term = []
+        indices_to_remove = []
+        for i, (term, postings, file_idx) in enumerate(block_lines):
+            if term == min_term:
+                postings_for_term.extend(postings)
+                indices_to_remove.append(i)
+        # Remove processed entries and read next lines
+        for i in reversed(indices_to_remove):
+            file_idx = block_lines[i][2]
+            block_lines.pop(i)
+
+            # Read next line from this file
+            line = file_handles[file_idx].readline()
+            if line:
+                term, postings_str = line.strip().split(':', 1)
+                postings = list(map(int, postings_str.split()))
+                block_lines.append((term, postings, file_idx))
+        
+        # Merge and sort postings + remove duplicates
+        merged_index[min_term] = sorted(set(postings_for_term))
+    
+    # Closes all file handles for maintenance
+    for fh in file_handles:
+        fh.close()
+
+    # Writes the merged inverted index to disk in human-readable format
+    with open(output_file, 'w', encoding='utf-8') as f:
+        for term in sorted(merged_index.keys()):
+            postings = merged_index[term]
+            f.write(f"{term}: {' '.join(map(str, postings))}\n")
+    
+    # Cleans up the block files
+    for block_file in block_files:
+        if os.path.exists(block_file):
+            os.remove(block_file)
+    return merged_index
+
+def build_spimi_index(directory, max_docs=None):
     return 0

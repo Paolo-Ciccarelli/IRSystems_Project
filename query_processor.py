@@ -55,6 +55,11 @@ print("Seaching up 'hollywood':",lookup_singleQ(inverted_index,"hollywood"))
 print("Seaching up 'Canada':",lookup_singleQ(inverted_index,"Canada"))
 
 # Multiple Term test queries
-print("Searching up 'liberal' and 'conservative':", lookup_andQ(inverted_index, "liberal", "conservative")) 
-print("Seaching up 'supreme' and 'court':", lookup_andQ(inverted_index, "supreme", "court"))
-print("Seaching up 'cold' and 'war':",lookup_andQ(inverted_index, "cold", "war"))
+print("\nSearching up 'liberal' and 'conservative':", lookup_andQ(inverted_index, "liberal", "conservative")) 
+print("\nSeaching up 'supreme' and 'court':", lookup_andQ(inverted_index, "supreme", "court"))
+print("\nSeaching up 'cold' and 'war':",lookup_andQ(inverted_index, "cold", "war"))
+
+# Challenge queries
+print("\nChallenge Query #1 'copper':", lookup_singleQ(inverted_index,"copper"))
+print("\nChallenge Query #2 'Chrysler':", lookup_singleQ(inverted_index,"Chrysler"))
+print("\nChallenge Query #3 'Bundesbank':", lookup_singleQ(inverted_index,"Bundesbank"))
