@@ -102,9 +102,9 @@ def sort_cull(F):
 
 # Constructs the inverted index
 # Hash Table (key: the term, value: its postings list)
-def build_inverted_index(F_sorted):
+def build_inverted_index(F_final):
     index = {} 
-    for term, docid in F_sorted:
+    for term, docid in F_final:
         if term not in index:
             index[term] = []
         index[term].append(docid)

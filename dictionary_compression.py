@@ -49,7 +49,7 @@ def chain_base(tokens):
 # Evaluates the percentage change from the previous value (Δ%)
 # By convention: positive return for increase, negative return for decrease
 def calculate_delta(current: int, previous: int):
-    # exception handling to avoid division by zero
+    # exception handling to protect against division by zero
     if not previous:
         return 0
     difference = previous - current
@@ -58,7 +58,7 @@ def calculate_delta(current: int, previous: int):
 
 # Evaluates the cumulative percentage change from the baseline
 def calculate_total(current, baseline):
-    # exception handling to avoid division by zero
+    # exception handling to protect against division by zero
     if not baseline:
         return 0
     difference = baseline - current
@@ -156,8 +156,8 @@ def print_table(results):
         p_total = calculate_total(current['postings'], baseline_postings)
         
         # Print row with formatted numbers and percentages
-        print(f"{stages_print[i]:20} {current['terms']:10,} {abs(t_delta):5} {abs(t_total):5}   "
-              f"{current['postings']:10,} {abs(p_delta):5} {abs(p_total):5}")
+        print(f"{stages_print[i]:20} {current['terms']:10,} {t_delta:>5} {t_total:>5}   "
+              f"{current['postings']:10,} {p_delta:>5} {p_total:>5}")
 
         # Update previous values for the next iteration
         prev_terms = current['terms']
