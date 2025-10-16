@@ -1,6 +1,5 @@
 import naive_indexer
 import nltk, os, glob
-from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import RegexpTokenizer
@@ -125,8 +124,8 @@ def build_compression_table(directory):
 # Prints the final compression table to the console
 # Evaluates Δ% and T% respectively during construction
 def print_table(results):
-    stages_code = ['unfiltered', 'no_numbers', 'case_folding', 'stop_30', 'stop_150', 'stemming']
-    stages_print = ['unfiltered', 'no numbers', 'case folding', '30 stop words', '150 stop words', 'stemming']
+    stages_keys = ['unfiltered', 'no_numbers', 'case_folding', 'stop_30', 'stop_150', 'stemming']
+    stage_displays = ['unfiltered', 'no numbers', 'case folding', '30 stop words', '150 stop words', 'stemming']
     
     print("\n"+"="*80)
     print("Dictionary Compression Table (5.1)")
@@ -141,27 +140,28 @@ def print_table(results):
 
     prev_terms = baseline_terms
     prev_postings = baseline_postings
-    for i, stage in enumerate(stages_code):
-        current = results[stage]
-        if stage in ['stop_30', 'stop_150']:
-            prev_terms_temp = results['case_folding']['terms']
-            prev_postings_temp = results['case_folding']['postings']
+    for stage_key, display_name in zip(stages_keys,stage_displays):
+        stage_results = results[stage_key]
+        if stage_key in ['stop_30', 'stop_150']:
+            special_prev_terms = results['case_folding']['terms']
+            special_prev_postings = results['case_folding']['postings']
         else:
-            prev_terms_temp = prev_terms
-            prev_postings_temp = prev_postings
+            special_prev_terms = prev_terms
+            special_prev_postings = prev_postings
 
-        t_delta = calculate_delta(current['terms'], prev_terms_temp)
-        p_delta = calculate_delta(current['postings'], prev_postings_temp)
-        t_total = calculate_total(current['terms'], baseline_terms)
-        p_total = calculate_total(current['postings'], baseline_postings)
+        t_delta = calculate_delta(stage_results['terms'], special_prev_terms)
+        p_delta = calculate_delta(stage_results['postings'], special_prev_postings)
+        t_total = calculate_total(stage_results['terms'], baseline_terms)
+        p_total = calculate_total(stage_results['postings'], baseline_postings)
         
         # Print row with formatted numbers and percentages
-        print(f"{stages_print[i]:20} {current['terms']:10,} {t_delta:>5} {t_total:>5}   "
-              f"{current['postings']:10,} {p_delta:>5} {p_total:>5}")
+        print(f"{display_name:20}" 
+              f"{stage_results['terms']:10,} {t_delta:>5} {t_total:>5}   "
+              f"{stage_results['postings']:10,} {p_delta:>5} {p_total:>5}")
 
         # Update previous values for the next iteration
-        prev_terms = current['terms']
-        prev_postings = current['postings']
+        prev_terms = stage_results['terms']
+        prev_postings = stage_results['postings']
 
     print("="*80)
 
