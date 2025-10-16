@@ -119,7 +119,7 @@ def build_compression_table(directory):
             'terms': distinct_terms,      # For column 1
             'postings': nonpos_postings,  # For column 2
         }
-    return results, stages_F, top_30_stops, top_150_stops
+    return results
 
 # Prints the final compression table to the console
 # Evaluates Δ% and T% respectively during construction
@@ -165,10 +165,40 @@ def print_table(results):
 
     print("="*80)
 
+# Constructs the inverted index with all compression techniques applied
+def build_compressed_index(directory, stop_k: int = 150):
+    sgm_files = sorted(glob.glob(os.path.join(directory, '*.sgm')))
+
+    # First Pass: scans corpus to identify the "k" most common stopwords
+    token_counts = Counter()
+    for filepath in sgm_files:
+        for docID, text in naive_indexer.parse_sgm(filepath):
+            tokens = tokenize_only(text)
+            normalized = chain_base(tokens)
+            token_counts.update(normalized)
+    top_k_stopwords = {word for word, _ in token_counts.most_common(stop_k)}
+
+    # Second Pass: generates (term, docID) pairs after applying all compression techniques
+    F = []
+    for filepath in sgm_files:
+        for docID, text in naive_indexer.parse_sgm(filepath):
+            tokens = tokenize_only(text)
+            normalized = chain_base(tokens)
+            filtered = remove_stopwords(normalized, top_k_stopwords)
+            stemmed = stem_tokens(filtered)
+            for term in stemmed:
+                F.append((term, docID))
+    
+    # Proceed with constructing the finalized compressed index
+    F_sorted = naive_indexer.sort_cull(F)
+    compressed_index = naive_indexer.build_inverted_index(F_sorted)
+    print("DEBUG: the compressed inverted index has been successfully constructed.")
+    return compressed_index        
 
 # Testing 
 reuters_dir = 'C:\\Users\\prowl\\Downloads\\reuters21578'   
-results, _, _, _ = build_compression_table(reuters_dir)
+build_compressed_index(reuters_dir)
+results = build_compression_table(reuters_dir)
 print_table(results)
 
 

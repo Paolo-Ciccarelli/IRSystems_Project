@@ -1,11 +1,11 @@
 from nltk.stem import PorterStemmer
-from naive_indexer import inverted_index
+from typing import Dict, List, Iterable
+
 STEMMER = PorterStemmer()
 
-# Processes a single term query
-def lookup_singleQ(dictionary, term):
-    term = STEMMER.stem(term.lower())
-    return dictionary.get(term, [])
+# Performs query normalization
+def _normalize(term: str) -> str:
+    return STEMMER.stem(term.lower())
 
 # Implements Figure 1.6 from the textbook
 # Evaluates the intersection of two postings lists p1 and p2
@@ -23,32 +23,39 @@ def intersect_postings(p1, p2):
             j += 1
     return answer
 
+# Processes a single term query
+def lookup_singleQ(index: Dict[str, List[int]], term: str) -> List[int]:
+    return sorted(index.get(_normalize(term), []))
+
 # Implements Figure 1.7 from the textbook
 # Returns the set of documents containing each term in the input list of terms
-def lookup_andQ(dictionary, *terms):
+def lookup_andQ(index: Dict[str, List[int]], *terms: str) -> List[int]:
     # dictionary: the naive inverted index
     # *terms: a tuple collecting all arguments after dictionary <t1,...,tn>
     if not terms: 
         return []
-    normalized_terms = [STEMMER.stem(term.lower()) for term in terms]
     # Retrieves postings lists for all terms in *terms
-    postings_lists = []
-    for term in normalized_terms:
-        postings = dictionary.get(term, [])
-        # Handles scenario where any term has no postings
-        if not postings:
+    term_postings = []
+    for t in terms:
+        postings_list = sorted(index.get(_normalize(t), []))
+        # Handles scenario where one or more terms have no postings
+        if not postings_list:
             return []
-        postings_lists.append((term, postings))
-    postings_lists.sort(key=lambda x: len(x[1])) #sorts by increasing size
-    result = postings_lists[0][1]
-    for i in range (1, len(postings_lists)):
-        if not result:
+        term_postings.append(postings_list)
+    # Sorts shortest postings first for efficiency
+    term_postings.sort(key=len) 
+    intersect_result = term_postings[0]
+    # Iteratively intersects remaining postings lists
+    for next_postings in term_postings[1:]:
+        # Handles scenario where intersection is already empty
+        if not intersect_result:
             break
-        result = intersect_postings(result, postings_lists[i][1])
-    return result
+        intersect_result = intersect_postings(intersect_result, next_postings)
+    return intersect_result
 
 
 # Single Term test queries
+from naive_indexer import inverted_index
 print("Searching up 'lawsuit':", lookup_singleQ(inverted_index,"lawsuit")) 
 print("Seaching up 'bankruptcy':", lookup_singleQ(inverted_index,"bankruptcy"))
 print("Seaching up 'hollywood':",lookup_singleQ(inverted_index,"hollywood"))
