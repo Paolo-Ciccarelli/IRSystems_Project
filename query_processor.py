@@ -1,3 +1,4 @@
+import time
 from nltk.stem import PorterStemmer
 from typing import Dict, List, Iterable
 
@@ -25,7 +26,11 @@ def intersect_postings(p1, p2):
 
 # Processes a single term query
 def lookup_singleQ(index: Dict[str, List[int]], term: str) -> List[int]:
-    return sorted(index.get(_normalize(term), []))
+    start_time = time.time()
+    result = sorted(index.get(_normalize(term), []))
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    return result, elapsed_time
 
 # Implements Figure 1.7 from the textbook
 # Returns the set of documents containing each term in the input list of terms
@@ -33,7 +38,8 @@ def lookup_andQ(index: Dict[str, List[int]], *terms: str) -> List[int]:
     # dictionary: the naive inverted index
     # *terms: a tuple collecting all arguments after dictionary <t1,...,tn>
     if not terms: 
-        return []
+        return [], 0.0
+    start_time = time.time()
     # Retrieves postings lists for all terms in *terms
     term_postings = []
     for t in terms:
@@ -51,15 +57,16 @@ def lookup_andQ(index: Dict[str, List[int]], *terms: str) -> List[int]:
         if not intersect_result:
             break
         intersect_result = intersect_postings(intersect_result, next_postings)
-    return intersect_result
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    return intersect_result, elapsed_time
 
 
-# Single Term test queries
 from naive_indexer import inverted_index
+# Single Term test queries
 print("Searching up 'lawsuit':", lookup_singleQ(inverted_index,"lawsuit")) 
 print("Seaching up 'bankruptcy':", lookup_singleQ(inverted_index,"bankruptcy"))
 print("Seaching up 'hollywood':",lookup_singleQ(inverted_index,"hollywood"))
-print("Seaching up 'Canada':",lookup_singleQ(inverted_index,"Canada"))
 
 # Multiple Term test queries
 print("\nSearching up 'liberal' and 'conservative':", lookup_andQ(inverted_index, "liberal", "conservative")) 

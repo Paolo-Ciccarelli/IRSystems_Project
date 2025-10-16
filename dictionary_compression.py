@@ -1,5 +1,5 @@
 import naive_indexer
-import nltk, os, glob
+import nltk, os, glob, time
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import RegexpTokenizer
@@ -195,10 +195,39 @@ def build_compressed_index(directory, stop_k: int = 150):
     print("DEBUG: the compressed inverted index has been successfully constructed.")
     return compressed_index        
 
-# Testing 
-reuters_dir = 'C:\\Users\\prowl\\Downloads\\reuters21578'   
-build_compressed_index(reuters_dir)
-results = build_compression_table(reuters_dir)
-print_table(results)
+from naive_indexer import inverted_index
+from query_processor import lookup_singleQ, lookup_andQ
+if __name__ == "__main__":
+    # Testing
+    reuters_dir = 'C:\\Users\\prowl\\Downloads\\reuters21578'   
+    compressed_index = build_compressed_index(reuters_dir)
+    #results = build_compression_table(reuters_dir)
+    #print_table(results)
 
+    # Single Term test queries with Naive Indexer
+    answern1, naive_time_s1 = lookup_singleQ(inverted_index,"lawsuit")
+    answern2, naive_time_s2 = lookup_singleQ(inverted_index,"bankruptcy")
+    answern3, naive_time_s3 = lookup_singleQ(inverted_index,"hollywood")
+    
+    # Multiple Term test queries with Naive Indexer
+    answern4, naive_time_a1 = lookup_andQ(inverted_index, "liberal", "conservative")
+    answern5, naive_time_a2 = lookup_andQ(inverted_index, "supreme", "court")
+    answern6, naive_time_a3 = lookup_andQ(inverted_index, "cold", "war")
 
+    # Single Term test queries with Compressed Indexer
+    answerc1, compress_time_s1 = lookup_singleQ(compressed_index,"lawsuit")
+    answerc2, compress_time_s2 = lookup_singleQ(compressed_index,"bankruptcy")
+    answerc3, compress_time_s3 = lookup_singleQ(compressed_index,"hollywood")
+    
+    # Multiple Term test queries with Compressed Indexer
+    answerc4, compress_time_a1 = lookup_andQ(compressed_index, "liberal", "conservative")
+    answerc5, compress_time_a2 = lookup_andQ(compressed_index, "supreme", "court")
+    answerc6, compress_time_a3 = lookup_andQ(compressed_index, "cold", "war")
+
+    # Comparison of Runtimes
+    print(f"\nFor 'lawsuit': naive took {naive_time_s1} seconds, compressed index took {compress_time_s1} seconds.")
+    print(f"For 'bankruptcy': naive took {naive_time_s2} seconds, compressed index took {compress_time_s2} seconds.")
+    print(f"For 'hollywood': naive took {naive_time_s3} seconds, compressed index took {compress_time_s3} seconds.")
+    print(f"For 'liberal' and 'conservative': naive took {naive_time_a1} seconds, compressed index took {compress_time_a1} seconds.")
+    print(f"For 'supreme' and 'court': naive took {naive_time_a2} seconds, compressed index took {compress_time_a2} seconds.")
+    print(f"For 'cold' and 'war': naive took {naive_time_a3} seconds, compressed index took {compress_time_a3} seconds.")
