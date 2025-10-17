@@ -112,17 +112,14 @@ def build_inverted_index(F_final):
     return index
 
 
-print("="*60)
-print("NAIVE INDEXER IMPLEMENTATION")
-print("="*60)
 reuters_dir = 'C:\\Users\\prowl\\Downloads\\reuters21578'    
 F = process_documents(reuters_dir)
 F_sorted = sort_cull(F)
 inverted_index = build_inverted_index(F_sorted)
-#display_index_info(inverted_index)
 
-# Written to file for convenient access
-with open('inverted_index.txt', 'w', encoding='utf-8') as f:
-    for term, postings in sorted(inverted_index.items()):
-        f.write(f"{term}: {postings}\n")
-print("DEBUG: written to file")
+if __name__ == "__main__":
+    # Written to file for convenient access
+    with open('inverted_index.txt', 'w', encoding='utf-8') as f:
+        for term, postings in sorted(inverted_index.items()):
+            f.write(f"{term}: {postings}\n")
+    print("DEBUG: written to file")

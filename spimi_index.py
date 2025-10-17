@@ -230,5 +230,6 @@ def compare_with_naive(directory, num_pairs=10000):
     print(f"In other words, SPIMI outperformed Naive by {naive_time-spimi_time:.6f} seconds and was {(naive_time-spimi_time)/(spimi_time)*100:.2f}% faster.")
 
 # Testing
-reuters_dir = 'C:\\Users\\prowl\\Downloads\\reuters21578'  
-compare_with_naive(reuters_dir)
+if __name__ == "__main__":
+    reuters_dir = 'C:\\Users\\prowl\\Downloads\\reuters21578'  
+    compare_with_naive(reuters_dir)

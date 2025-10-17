@@ -63,17 +63,13 @@ def lookup_andQ(index: Dict[str, List[int]], *terms: str) -> List[int]:
 
 
 from naive_indexer import inverted_index
-# Single Term test queries
-print("Searching up 'lawsuit':", lookup_singleQ(inverted_index,"lawsuit")) 
-print("Seaching up 'bankruptcy':", lookup_singleQ(inverted_index,"bankruptcy"))
-print("Seaching up 'hollywood':",lookup_singleQ(inverted_index,"hollywood"))
+if __name__ == "__main__":
+    # Single Term test queries
+    print("Searching up 'lawsuit':", lookup_singleQ(inverted_index,"lawsuit")) 
+    print("Seaching up 'bankruptcy':", lookup_singleQ(inverted_index,"bankruptcy"))
+    print("Seaching up 'hollywood':",lookup_singleQ(inverted_index,"hollywood"))
 
-# Multiple Term test queries
-print("\nSearching up 'liberal' and 'conservative':", lookup_andQ(inverted_index, "liberal", "conservative")) 
-print("\nSeaching up 'supreme' and 'court':", lookup_andQ(inverted_index, "supreme", "court"))
-print("\nSeaching up 'cold' and 'war':",lookup_andQ(inverted_index, "cold", "war"))
-
-# Challenge queries
-print("\nChallenge Query #1 'copper':", lookup_singleQ(inverted_index,"copper"))
-print("\nChallenge Query #2 'Chrysler':", lookup_singleQ(inverted_index,"Chrysler"))
-print("\nChallenge Query #3 'Bundesbank':", lookup_singleQ(inverted_index,"Bundesbank"))
+    # Multiple Term test queries
+    print("\nSearching up 'liberal' and 'conservative':", lookup_andQ(inverted_index, "liberal", "conservative")) 
+    print("\nSeaching up 'supreme' and 'court':", lookup_andQ(inverted_index, "supreme", "court"))
+    print("\nSeaching up 'cold' and 'war':",lookup_andQ(inverted_index, "cold", "war"))
